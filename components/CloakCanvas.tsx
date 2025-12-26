@@ -21,6 +21,7 @@ const CloakCanvas: React.FC<CloakCanvasProps> = ({
   const animationFrameRef = useRef<number>();
 
   const [errorType, setErrorType] = useState<"PERMISSION_DENIED" | "UNKNOWN" | null>(null);
+  const [overlayMessage, setOverlayMessage] = useState<string | null>(null);
 
   // Setup Webcam
   useEffect(() => {
@@ -62,17 +63,31 @@ const CloakCanvas: React.FC<CloakCanvasProps> = ({
   // Capture Background Effect
   useEffect(() => {
     if (triggerCapture > 0 && canvasRef.current && videoRef.current) {
-        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-        if (ctx) {
-            // Draw current frame to canvas
-            ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-            // Get image data
-            const frame = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
-            // Store as background
-            backgroundRef.current = frame;
-            // Notify parent
-            onBackgroundCaptured(canvasRef.current.toDataURL('image/png'));
-        }
+        setOverlayMessage("Capturing background...");
+        
+        // Artificial delay to show the 'Capturing' state to the user
+        const timer = setTimeout(() => {
+            if (!canvasRef.current || !videoRef.current) return;
+
+            const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+            if (ctx) {
+                // Draw current frame to canvas
+                ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+                // Get image data
+                const frame = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+                // Store as background
+                backgroundRef.current = frame;
+                
+                setOverlayMessage("Background captured!");
+                // Notify parent
+                onBackgroundCaptured(canvasRef.current.toDataURL('image/png'));
+                
+                // Hide success message after 2 seconds
+                setTimeout(() => setOverlayMessage(null), 2000);
+            }
+        }, 600);
+        
+        return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerCapture]);
@@ -194,17 +209,45 @@ const CloakCanvas: React.FC<CloakCanvasProps> = ({
         className="w-full h-full object-cover transform scale-x-[-1]" // Mirror effect
       />
 
+      {/* Target Color Indicator Overlay */}
+      <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/50 px-3 py-1.5 rounded-full border border-slate-700/50 backdrop-blur-sm pointer-events-none z-10">
+          <div 
+              className="w-4 h-4 rounded-full border border-white/20 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+              style={{ backgroundColor: `hsl(${config.targetHue}, 100%, 50%)` }}
+          />
+          <span className="text-xs font-medium text-slate-300">Target</span>
+      </div>
+
       {/* Live Indicator */}
       {backgroundRef.current && (
-         <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 px-3 py-1 rounded-full border border-red-500/30">
+         <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 px-3 py-1 rounded-full border border-red-500/30 z-10">
             <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             <span className="text-xs font-mono text-white font-bold tracking-widest uppercase">LIVE</span>
          </div>
       )}
 
-      {/* Overlay Instructions */}
-      {!backgroundRef.current && !errorType && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 pointer-events-none p-4 text-center">
+      {/* Capture Feedback Overlay */}
+      {overlayMessage && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20 pointer-events-none transition-opacity duration-300">
+            <div className="bg-slate-900/90 text-white px-6 py-3 rounded-full font-semibold shadow-2xl border border-slate-700 flex items-center gap-3 transform scale-110">
+                {overlayMessage === 'Capturing background...' ? (
+                    <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                )}
+                <span>{overlayMessage}</span>
+            </div>
+        </div>
+      )}
+
+      {/* Overlay Instructions (only if no background and no error) */}
+      {!backgroundRef.current && !errorType && !overlayMessage && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 pointer-events-none p-4 text-center z-10">
             <h3 className="text-2xl font-bold text-white mb-2">Step 1: Capture Background</h3>
             <p className="text-slate-300">Move out of the frame and click "Capture Background". This creates the reference image for the invisibility effect.</p>
         </div>
