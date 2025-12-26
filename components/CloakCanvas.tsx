@@ -194,6 +194,14 @@ const CloakCanvas: React.FC<CloakCanvasProps> = ({
         className="w-full h-full object-cover transform scale-x-[-1]" // Mirror effect
       />
 
+      {/* Live Indicator */}
+      {backgroundRef.current && (
+         <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 px-3 py-1 rounded-full border border-red-500/30">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            <span className="text-xs font-mono text-white font-bold tracking-widest uppercase">LIVE</span>
+         </div>
+      )}
+
       {/* Overlay Instructions */}
       {!backgroundRef.current && !errorType && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 pointer-events-none p-4 text-center">

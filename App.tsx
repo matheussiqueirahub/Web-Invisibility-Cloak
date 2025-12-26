@@ -27,10 +27,10 @@ const App: React.FC = () => {
   }, []);
 
   const handleReset = useCallback(() => {
+    // Soft reset state without reloading page for better UX
     setBackgroundImage(null);
     setStatus(CloakStatus.IDLE);
-    // Reload window to fully clear canvas/video state if needed, or just reset state
-    window.location.reload(); 
+    setTriggerCapture(0);
   }, []);
 
   return (
