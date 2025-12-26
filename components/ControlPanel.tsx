@@ -1,5 +1,6 @@
 import React from 'react';
 import { ProcessingConfig } from '../types';
+import { hexToRgb, rgbToHsl, hslToHex } from '../utils/colorUtils';
 
 interface ControlPanelProps {
   config: ProcessingConfig;
@@ -18,6 +19,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 }) => {
   const handleChange = (key: keyof ProcessingConfig, value: number) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const hex = e.target.value;
+    const { r, g, b } = hexToRgb(hex);
+    const { h } = rgbToHsl(r, g, b);
+    handleChange('targetHue', h);
   };
 
   return (
@@ -52,34 +60,32 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       <div className="space-y-4 pt-4 border-t border-slate-700">
         <div>
-          <label className="flex justify-between text-sm font-medium text-slate-300 mb-1">
-            Target Hue (Color)
-            <span className="text-blue-400">{config.targetHue}°</span>
+          <label className="flex justify-between text-sm font-medium text-slate-300 mb-2">
+            Target Color
+            <span className="text-blue-400">{Math.round(config.targetHue)}°</span>
           </label>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            value={config.targetHue}
-            onChange={(e) => handleChange('targetHue', Number(e.target.value))}
-            className="w-full h-2 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-lg appearance-none cursor-pointer"
-          />
-          <div className="flex justify-between text-xs text-slate-500 mt-1">
-            <span>Red (0/360)</span>
-            <span>Green (120)</span>
-            <span>Blue (240)</span>
+          <div className="flex items-center gap-2">
+            <input
+                type="color"
+                value={hslToHex(config.targetHue, 100, 50)}
+                onChange={handleColorChange}
+                className="h-10 w-full cursor-pointer rounded-lg bg-slate-700 border border-slate-600 p-1"
+            />
           </div>
+          <p className="text-xs text-slate-500 mt-2">
+            Click to pick the color you want to make invisible.
+          </p>
         </div>
 
         <div>
           <label className="flex justify-between text-sm font-medium text-slate-300 mb-1">
-            Hue Tolerance
+            Hue Tolerance (Sensitivity)
             <span className="text-blue-400">±{config.hueThreshold}</span>
           </label>
           <input
             type="range"
             min="5"
-            max="60"
+            max="90"
             value={config.hueThreshold}
             onChange={(e) => handleChange('hueThreshold', Number(e.target.value))}
             className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
@@ -97,6 +103,21 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             max="100"
             value={config.satThreshold}
             onChange={(e) => handleChange('satThreshold', Number(e.target.value))}
+            className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="flex justify-between text-sm font-medium text-slate-300 mb-1">
+            Brightness Threshold
+            <span className="text-blue-400">{config.valThreshold}%</span>
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={config.valThreshold}
+            onChange={(e) => handleChange('valThreshold', Number(e.target.value))}
             className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
           />
         </div>
