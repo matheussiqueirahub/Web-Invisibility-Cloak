@@ -8,7 +8,7 @@ export const analyzeScene = async (base64Image: string): Promise<string> => {
     const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: {
         parts: [
           {
@@ -21,6 +21,11 @@ export const analyzeScene = async (base64Image: string): Promise<string> => {
             text: "You are a tech-savvy magician's assistant. Analyze this image which is the 'secret background' for an invisibility cloak trick. Briefly describe the setting and suggest what kind of object would be funny to make invisible in this specific room. Keep it short and witty."
           }
         ]
+      },
+      config: {
+        thinkingConfig: {
+          thinkingBudget: 32768
+        }
       }
     });
 
@@ -34,8 +39,13 @@ export const analyzeScene = async (base64Image: string): Promise<string> => {
 export const explainTechnology = async (): Promise<string> => {
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: "Explain to a non-technical user how 'Chroma Key' or 'Invisibility Cloak' technology works in computer vision (using Hue, Saturation, Masking) in 3 simple sentences."
+            model: 'gemini-3-pro-preview',
+            contents: "Explain to a non-technical user how 'Chroma Key' or 'Invisibility Cloak' technology works in computer vision (using Hue, Saturation, Masking) in 3 simple sentences.",
+            config: {
+              thinkingConfig: {
+                thinkingBudget: 32768
+              }
+            }
         });
         return response.text || "Magic is just science we don't understand yet.";
     } catch (error) {
